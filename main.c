@@ -1,11 +1,29 @@
 
+#ifndef _WIN32
+#define _POSIX_C_SOURCE 199309L
+#endif
 #include "game_interface.h"
 #include "game_engine.h"
 #include "score_manager.h"
 
 #include <stdio.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <time.h>
+#endif
 
+static void delay_ms(int milliseconds)
+{
+#ifdef _WIN32
+    Sleep((DWORD)milliseconds);
+#else
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (long)(milliseconds % 1000) * 1000000L;
+    nanosleep(&ts, NULL);
+#endif
+}
 #define TICK_MS 120
 
 int main(void) {
@@ -64,10 +82,10 @@ int main(void) {
         }
 
         if (state.status == GAME_RUNNING) {
-            Sleep(TICK_MS);
+            delay_ms(TICK_MS);
             engine_tick(&state);
         } else {
-            Sleep(50);
+            delay_ms(50);
         }
     }
 
