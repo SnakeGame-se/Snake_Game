@@ -1,0 +1,28 @@
+
+name: Snake Game C Build
+
+on:
+  push:
+    branches: ["main", "SG-*"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    name: Compile Snake Game
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc
+
+      - name: Compile C project
+        run: |
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            main.c game_engine.c game_interface.c score_manager.c \
+            -o snake
