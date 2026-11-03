@@ -69,7 +69,18 @@ void engine_initialize(GameState *state) {
                                  BOARD_HEIGHT / 2};
 
     state->direction = DIR_RIGHT;
-    state->obstacle_count = 0;
+    /* Initialize fixed obstacles. These positions do not change. */
+state->obstacle_count = 8;
+
+state->obstacles[0] = (Position){8, 5};
+state->obstacles[1] = (Position){15, 5};
+state->obstacles[2] = (Position){25, 5};
+state->obstacles[3] = (Position){32, 5};
+
+state->obstacles[4] = (Position){8, 15};
+state->obstacles[5] = (Position){15, 15};
+state->obstacles[6] = (Position){25, 15};
+state->obstacles[7] = (Position){32, 15};
 
     srand((unsigned int)time(NULL));
     spawn_food(state);
