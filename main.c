@@ -2,16 +2,21 @@
 #ifndef _WIN32
 #define _POSIX_C_SOURCE 199309L
 #endif
+
 #include "game_interface.h"
 #include "game_engine.h"
 #include "score_manager.h"
+#include "graphics_interface.h"
 
 #include <stdio.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <time.h>
 #endif
+
+#define TICK_MS 120
 
 static void delay_ms(int milliseconds)
 {
@@ -24,30 +29,36 @@ static void delay_ms(int milliseconds)
     nanosleep(&ts, NULL);
 #endif
 }
-#define TICK_MS 120
 
-int main(void) {
+int main(void)
+{
     GameState state;
     int mode;
     int key;
 
+    /* Ask the player to select an interface. */
     mode = interface_select_mode();
 
     if (mode == 0) {
         return 0;
     }
 
-    if (mode != MODE_CONSOLE) {
-        interface_show_message(
-            "Graphics mode is not implemented yet. "
-            "Please run console mode."
-        );
-        return 0;
+    /* Initialize the shared game state. */
+    engine_initialize(&state);
+    session_start(&state);
+
+    /* Start Windows graphics mode. */
+    if (mode == MODE_GRAPHICS) {
+        return graphics_run(&state);
     }
 
-    engine_initialize(&state);
+    /* Start console mode. */
+    if (mode != MODE_CONSOLE) {
+        interface_show_message("Invalid game mode selected.");
+        return 1;
+    }
+
     interface_show_instructions();
-    session_start(&state);
 
     while (state.status != GAME_QUIT) {
         interface_render_console(&state);
