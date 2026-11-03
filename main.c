@@ -6,11 +6,9 @@
 #include "game_interface.h"
 #include "game_engine.h"
 #include "score_manager.h"
-#include "graphics_interface.h"
-
-#include <stdio.h>
 
 #ifdef _WIN32
+#include "graphics_interface.h"
 #include <windows.h>
 #else
 #include <time.h>
@@ -24,8 +22,10 @@ static void delay_ms(int milliseconds)
     Sleep((DWORD)milliseconds);
 #else
     struct timespec ts;
+
     ts.tv_sec = milliseconds / 1000;
     ts.tv_nsec = (long)(milliseconds % 1000) * 1000000L;
+
     nanosleep(&ts, NULL);
 #endif
 }
@@ -36,23 +36,27 @@ int main(void)
     int mode;
     int key;
 
-    /* Ask the player to select an interface. */
     mode = interface_select_mode();
 
     if (mode == 0) {
         return 0;
     }
 
-    /* Initialize the shared game state. */
     engine_initialize(&state);
     session_start(&state);
 
-    /* Start Windows graphics mode. */
+    /* Graphics mode is available on Windows only. */
     if (mode == MODE_GRAPHICS) {
+#ifdef _WIN32
         return graphics_run(&state);
+#else
+        interface_show_message(
+            "Graphics mode is available only on Windows."
+        );
+        return 0;
+#endif
     }
 
-    /* Start console mode. */
     if (mode != MODE_CONSOLE) {
         interface_show_message("Invalid game mode selected.");
         return 1;
@@ -61,10 +65,13 @@ int main(void)
     interface_show_instructions();
 
     while (state.status != GAME_QUIT) {
+
         interface_render_console(&state);
 
         if (state.status == GAME_OVER) {
+
             interface_show_game_over(&state);
+
             key = interface_wait_key();
 
             if (key == 'r') {
@@ -85,17 +92,20 @@ int main(void)
 
         if (key == 'p') {
             session_toggle_pause(&state);
-        } else if (key == 'r') {
+        }
+        else if (key == 'r') {
             engine_initialize(&state);
             session_start(&state);
-        } else {
+        }
+        else {
             engine_set_direction(&state, key);
         }
 
         if (state.status == GAME_RUNNING) {
             delay_ms(TICK_MS);
             engine_tick(&state);
-        } else {
+        }
+        else {
             delay_ms(50);
         }
     }
