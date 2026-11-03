@@ -19,9 +19,67 @@
 
 #define TIMER_ID 1
 #define TICK_MS 120
+#define GRAPHICS_OBSTACLE_COUNT 8
 
 static GameState *game_state = NULL;
 static HWND game_window = NULL;
+
+/*
+ * Add graphics-only obstacles.
+ * Candidate positions are checked against the snake and food
+ * before being added to the shared game state.
+ */
+static void setup_graphics_obstacles(void)
+{
+    static const Position candidates[] = {
+        {7, 4}, {8, 4}, {9, 4},
+        {30, 4}, {31, 4}, {32, 4},
+        {7, 15}, {8, 15}, {9, 15},
+        {30, 15}, {31, 15}, {32, 15}
+    };
+
+    size_t i;
+    size_t j;
+    size_t candidate_count =
+        sizeof(candidates) / sizeof(candidates[0]);
+
+    if (game_state == NULL) {
+        return;
+    }
+
+    game_state->obstacle_count = 0;
+
+    for (i = 0;
+         i < candidate_count &&
+         game_state->obstacle_count < GRAPHICS_OBSTACLE_COUNT;
+         ++i) {
+
+        bool occupied = false;
+
+        /* Do not place an obstacle on the snake. */
+        for (j = 0; j < game_state->snake_length; ++j) {
+            if (game_state->snake[j].x == candidates[i].x &&
+                game_state->snake[j].y == candidates[i].y) {
+                occupied = true;
+                break;
+            }
+        }
+
+        /* Do not place an obstacle on the food. */
+        if (game_state->food.x == candidates[i].x &&
+            game_state->food.y == candidates[i].y) {
+            occupied = true;
+        }
+
+        if (!occupied &&
+            game_state->obstacle_count < MAX_OBSTACLES) {
+            game_state->obstacles[game_state->obstacle_count] =
+                candidates[i];
+
+            ++game_state->obstacle_count;
+        }
+    }
+}
 
 /* Draw one cell on the board. */
 static void draw_cell(
@@ -91,7 +149,6 @@ static void draw_text(
 static void render_game(HDC hdc)
 {
     size_t i;
-
     char score_text[80];
 
     RECT background;
@@ -104,87 +161,47 @@ static void render_game(HDC hdc)
         return;
     }
 
-    /* Background. */
     GetClientRect(game_window, &background);
 
-    background_brush = CreateSolidBrush(
-        RGB(18, 24, 38)
-    );
-
+    background_brush = CreateSolidBrush(RGB(18, 24, 38));
     FillRect(hdc, &background, background_brush);
     DeleteObject(background_brush);
 
-    /* Game title. */
-    draw_text(
-        hdc,
-        20,
-        15,
-        "SNAKE GAME",
-        RGB(80, 220, 150),
-        30
-    );
+    draw_text(hdc, 20, 15, "SNAKE GAME",
+              RGB(80, 220, 150), 30);
 
-    /* Score. */
-    sprintf(
-        score_text,
-        "Score: %d",
-        game_state->score
-    );
+    sprintf(score_text, "Score: %d", game_state->score);
 
-    draw_text(
-        hdc,
-        20,
-        58,
-        score_text,
-        RGB(255, 255, 255),
-        18
-    );
+    draw_text(hdc, 20, 58, score_text,
+              RGB(255, 255, 255), 18);
 
-    /* Controls and instructions. */
-    draw_text(
-        hdc,
-        160,
-        60,
-        "Move: WASD / Arrow Keys",
-        RGB(190, 200, 215),
-        13
-    );
+    draw_text(hdc, 160, 60,
+              "Move: WASD / Arrow Keys",
+              RGB(190, 200, 215), 13);
 
-    draw_text(
-        hdc,
-        160,
-        80,
-        "P: Pause   R: Restart   Q / ESC: Quit",
-        RGB(190, 200, 215),
-        13
-    );
+    draw_text(hdc, 160, 80,
+              "P: Pause   R: Restart   Q / ESC: Quit",
+              RGB(190, 200, 215), 13);
 
-    /* Game board. */
     board_rect.left = BOARD_X;
     board_rect.top = BOARD_Y;
     board_rect.right = BOARD_X + BOARD_PIXEL_WIDTH;
     board_rect.bottom = BOARD_Y + BOARD_PIXEL_HEIGHT;
 
-    board_brush = CreateSolidBrush(
-        RGB(29, 39, 55)
-    );
-
+    board_brush = CreateSolidBrush(RGB(29, 39, 55));
     FillRect(hdc, &board_rect, board_brush);
     DeleteObject(board_brush);
 
     /* Draw obstacles. */
-    for (
-        i = 0;
-        i < game_state->obstacle_count &&
-        i < MAX_OBSTACLES;
-        ++i
-    ) {
+    for (i = 0;
+         i < game_state->obstacle_count &&
+         i < MAX_OBSTACLES;
+         ++i) {
+
         draw_cell(
             hdc,
-            BOARD_X +
-                game_state->obstacles[i].x * CELL_SIZE,
-            BOARD_Y +
-                game_state->obstacles[i].y * CELL_SIZE,
+            BOARD_X + game_state->obstacles[i].x * CELL_SIZE,
+            BOARD_Y + game_state->obstacles[i].y * CELL_SIZE,
             RGB(145, 145, 155)
         );
     }
@@ -198,17 +215,11 @@ static void render_game(HDC hdc)
     );
 
     /* Draw snake body. */
-    for (
-        i = game_state->snake_length;
-        i > 1;
-        --i
-    ) {
+    for (i = game_state->snake_length; i > 1; --i) {
         draw_cell(
             hdc,
-            BOARD_X +
-                game_state->snake[i - 1].x * CELL_SIZE,
-            BOARD_Y +
-                game_state->snake[i - 1].y * CELL_SIZE,
+            BOARD_X + game_state->snake[i - 1].x * CELL_SIZE,
+            BOARD_Y + game_state->snake[i - 1].y * CELL_SIZE,
             RGB(65, 190, 125)
         );
     }
@@ -217,67 +228,35 @@ static void render_game(HDC hdc)
     if (game_state->snake_length > 0) {
         draw_cell(
             hdc,
-            BOARD_X +
-                game_state->snake[0].x * CELL_SIZE,
-            BOARD_Y +
-                game_state->snake[0].y * CELL_SIZE,
+            BOARD_X + game_state->snake[0].x * CELL_SIZE,
+            BOARD_Y + game_state->snake[0].y * CELL_SIZE,
             RGB(120, 255, 165)
         );
     }
 
-    /* Pause message. */
     if (game_state->status == GAME_PAUSED) {
-        draw_text(
-            hdc,
-            BOARD_X + 280,
-            BOARD_Y + 170,
-            "PAUSED",
-            RGB(255, 220, 100),
-            32
-        );
+        draw_text(hdc, BOARD_X + 280, BOARD_Y + 170,
+                  "PAUSED", RGB(255, 220, 100), 32);
 
-        draw_text(
-            hdc,
-            BOARD_X + 245,
-            BOARD_Y + 220,
-            "Press P to resume",
-            RGB(255, 255, 255),
-            17
-        );
+        draw_text(hdc, BOARD_X + 245, BOARD_Y + 220,
+                  "Press P to resume",
+                  RGB(255, 255, 255), 17);
     }
-
-    /* Game over message. */
     else if (game_state->status == GAME_OVER) {
-        draw_text(
-            hdc,
-            BOARD_X + 270,
-            BOARD_Y + 160,
-            "GAME OVER",
-            RGB(255, 90, 90),
-            32
-        );
+        draw_text(hdc, BOARD_X + 270, BOARD_Y + 160,
+                  "GAME OVER", RGB(255, 90, 90), 32);
 
-        draw_text(
-            hdc,
-            BOARD_X + 230,
-            BOARD_Y + 210,
-            "Press R to restart",
-            RGB(255, 255, 255),
-            17
-        );
+        draw_text(hdc, BOARD_X + 230, BOARD_Y + 210,
+                  "Press R to restart",
+                  RGB(255, 255, 255), 17);
 
-        draw_text(
-            hdc,
-            BOARD_X + 230,
-            BOARD_Y + 240,
-            "Press Q or ESC to quit",
-            RGB(255, 255, 255),
-            17
-        );
+        draw_text(hdc, BOARD_X + 230, BOARD_Y + 240,
+                  "Press Q or ESC to quit",
+                  RGB(255, 255, 255), 17);
     }
 }
 
-/* Restart the game using the shared game engine. */
+/* Restart the game and restore graphics obstacles. */
 static void restart_game(void)
 {
     if (game_state == NULL) {
@@ -285,6 +264,7 @@ static void restart_game(void)
     }
 
     engine_initialize(game_state);
+    setup_graphics_obstacles();
     session_start(game_state);
 
     InvalidateRect(game_window, NULL, TRUE);
@@ -306,72 +286,47 @@ static LRESULT CALLBACK game_window_proc(
     switch (message) {
 
     case WM_CREATE:
-        SetTimer(
-            hwnd,
-            TIMER_ID,
-            TICK_MS,
-            NULL
-        );
-
+        SetTimer(hwnd, TIMER_ID, TICK_MS, NULL);
         return 0;
 
-    /* Give the game window keyboard focus when activated. */
     case WM_ACTIVATE:
         if (LOWORD(wParam) != WA_INACTIVE) {
             SetFocus(hwnd);
         }
         return 0;
 
-    /* Update game movement at regular intervals. */
     case WM_TIMER:
+        if (game_state != NULL &&
+            game_state->status == GAME_RUNNING) {
 
-        if (
-            game_state != NULL &&
-            game_state->status == GAME_RUNNING
-        ) {
             engine_tick(game_state);
-
-            InvalidateRect(
-                hwnd,
-                NULL,
-                TRUE
-            );
+            InvalidateRect(hwnd, NULL, TRUE);
         }
-
         return 0;
 
-    /* Handle keyboard input. */
     case WM_KEYDOWN:
 
         if (game_state == NULL) {
             return 0;
         }
 
-        /* Quit. */
-        if (
-            wParam == 'Q' ||
-            wParam == 'q' ||
-            wParam == VK_ESCAPE
-        ) {
-            game_state->status = GAME_QUIT;
+        if (wParam == 'Q' || wParam == 'q' ||
+            wParam == VK_ESCAPE) {
 
+            game_state->status = GAME_QUIT;
             DestroyWindow(hwnd);
             return 0;
         }
 
-        /* Restart. */
         if (wParam == 'R' || wParam == 'r') {
             restart_game();
             return 0;
         }
 
-        /* Pause or resume. */
         if (wParam == 'P' || wParam == 'p') {
 
-            if (
-                game_state->status == GAME_RUNNING ||
-                game_state->status == GAME_PAUSED
-            ) {
+            if (game_state->status == GAME_RUNNING ||
+                game_state->status == GAME_PAUSED) {
                 session_toggle_pause(game_state);
             }
 
@@ -379,7 +334,6 @@ static LRESULT CALLBACK game_window_proc(
             return 0;
         }
 
-        /* Movement controls. */
         if (game_state->status == GAME_RUNNING) {
 
             switch (wParam) {
@@ -415,20 +369,13 @@ static LRESULT CALLBACK game_window_proc(
 
         return 0;
 
-    /* Redraw the game window. */
     case WM_PAINT:
-
         hdc = BeginPaint(hwnd, &ps);
-
         render_game(hdc);
-
         EndPaint(hwnd, &ps);
-
         return 0;
 
-    /* Handle window close. */
     case WM_CLOSE:
-
         if (game_state != NULL) {
             game_state->status = GAME_QUIT;
         }
@@ -436,22 +383,13 @@ static LRESULT CALLBACK game_window_proc(
         DestroyWindow(hwnd);
         return 0;
 
-    /* Clean up when the window is destroyed. */
     case WM_DESTROY:
-
         KillTimer(hwnd, TIMER_ID);
-
         PostQuitMessage(0);
-
         return 0;
     }
 
-    return DefWindowProcA(
-        hwnd,
-        message,
-        wParam,
-        lParam
-    );
+    return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
 /* Start the Windows graphics interface. */
@@ -467,45 +405,32 @@ int graphics_run(GameState *state)
 
     game_state = state;
 
-    ZeroMemory(
-        &window_class,
-        sizeof(window_class)
-    );
+    /* Add obstacles only for Graphics Mode. */
+    setup_graphics_obstacles();
+
+    ZeroMemory(&window_class, sizeof(window_class));
 
     window_class.lpfnWndProc = game_window_proc;
-
     window_class.hInstance = GetModuleHandleA(NULL);
-
     window_class.lpszClassName = "SnakeGameWindow";
+    window_class.hCursor = LoadCursor(NULL, IDC_ARROW);
+    window_class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 
-    window_class.hCursor = LoadCursor(
-        NULL,
-        IDC_ARROW
-    );
-
-    window_class.hbrBackground =
-        (HBRUSH)(COLOR_WINDOW + 1);
-
-    /* Register the game window class. */
     class_atom = RegisterClassA(&window_class);
 
-    if (
-        class_atom == 0 &&
-        GetLastError() != ERROR_CLASS_ALREADY_EXISTS
-    ) {
+    if (class_atom == 0 &&
+        GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
+
         game_state = NULL;
         return 1;
     }
 
-    /* Create the game window. */
     game_window = CreateWindowExA(
         0,
         "SnakeGameWindow",
         "Snake Game - Graphics Mode",
-        WS_OVERLAPPED |
-        WS_CAPTION |
-        WS_SYSMENU |
-        WS_MINIMIZEBOX,
+        WS_OVERLAPPED | WS_CAPTION |
+        WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
         WINDOW_WIDTH,
@@ -521,23 +446,15 @@ int graphics_run(GameState *state)
         return 1;
     }
 
-    /* Display and activate the window. */
     ShowWindow(game_window, SW_SHOW);
-
     UpdateWindow(game_window);
 
     SetForegroundWindow(game_window);
-
     SetActiveWindow(game_window);
-
     SetFocus(game_window);
 
-    /* Windows message loop. */
-    while (
-        GetMessageA(&message, NULL, 0, 0) > 0
-    ) {
+    while (GetMessageA(&message, NULL, 0, 0) > 0) {
         TranslateMessage(&message);
-
         DispatchMessageA(&message);
     }
 
