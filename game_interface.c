@@ -92,7 +92,13 @@ void interface_render_console(const GameState *state) {
     }
 
     /* ANSI clear-screen works in modern Windows Terminal and POSIX terminals. */
-    printf("\033[2J\033[H");
+    #ifdef _WIN32
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD position = {0, 0};
+    SetConsoleCursorPosition(hConsole, position);
+#else
+    printf("\033[H");
+#endif
     printf("NOKIA SNAKE   Score: %d   Status: ", state->score);
     switch (state->status) {
         case GAME_READY:   printf("READY"); break;
