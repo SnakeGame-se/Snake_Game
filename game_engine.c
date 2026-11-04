@@ -1,5 +1,5 @@
-
 #include "game_engine.h"
+#include "collision.h"
 #include "score_manager.h"
 
 #include <stdlib.h>
@@ -150,17 +150,10 @@ void engine_tick(GameState *state) {
     ate_food = (new_head.x == state->food.x &&
                 new_head.y == state->food.y);
 
-    /* Self-collision. The tail can move away unless food is eaten. */
-    for (i = 0; i < state->snake_length; ++i) {
-        if (!ate_food && i == state->snake_length - 1) {
-            break;
-        }
-
-        if (state->snake[i].x == new_head.x &&
-            state->snake[i].y == new_head.y) {
-            session_end(state);
-            return;
-        }
+    /* Self-collision (SG-17). The tail can move away unless food is eaten. */
+    if (collision_hits_self(state, new_head, ate_food)) {
+        session_end(state);
+        return;
     }
 
     /* Grow only when there is space in the snake array. */
