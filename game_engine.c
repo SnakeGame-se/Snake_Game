@@ -124,10 +124,13 @@ void engine_tick(GameState *state) {
     Position new_head;
     size_t i;
     bool ate_food;
-
+    
+    /* SG-30: Validate game state before processing movement. */
     if (state == NULL || state->status != GAME_RUNNING ||
         state->snake_length == 0 ||
-        state->snake_length > MAX_SNAKE_LENGTH) {
+        state->snake_length > MAX_SNAKE_LENGTH ||
+        state->direction < DIR_UP ||
+        state->direction > DIR_RIGHT) {
         return;
     }
 
