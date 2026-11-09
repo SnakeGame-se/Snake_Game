@@ -116,6 +116,12 @@ static void test_reverse_and_invalid_keys(void)
     engine_set_direction(&s, '1');
     CHECK(s.direction == DIR_RIGHT,
           "Numeric/invalid key does not change direction");
+
+     setup(&s);
+     s.direction = (Direction)99;
+     engine_set_direction(&s, 'w');
+     CHECK(s.direction == (Direction)99,
+          "Invalid current direction is rejected safely");
 }
 
 static void test_controls_when_not_running(void)

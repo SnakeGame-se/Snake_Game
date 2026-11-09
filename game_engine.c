@@ -88,10 +88,16 @@ state->obstacles[7] = (Position){32, 15};
 
 /* SG-10: Update the direction based on keyboard input.
    Ignore direct reversals into the snake's own body. */
+/* SG-51: Update direction after validating the current game state. */
 void engine_set_direction(GameState *state, int key) {
     Direction next;
 
     if (state == NULL || state->status != GAME_RUNNING) {
+        return;
+    }
+
+    /* Reject an invalid current direction. */
+    if (state->direction < DIR_UP || state->direction > DIR_RIGHT) {
         return;
     }
 
@@ -103,9 +109,9 @@ void engine_set_direction(GameState *state, int key) {
         default: return;
     }
 
-    if ((state->direction == DIR_UP    && next == DIR_DOWN) ||
-        (state->direction == DIR_DOWN  && next == DIR_UP) ||
-        (state->direction == DIR_LEFT  && next == DIR_RIGHT) ||
+    if ((state->direction == DIR_UP && next == DIR_DOWN) ||
+        (state->direction == DIR_DOWN && next == DIR_UP) ||
+        (state->direction == DIR_LEFT && next == DIR_RIGHT) ||
         (state->direction == DIR_RIGHT && next == DIR_LEFT)) {
         return;
     }
