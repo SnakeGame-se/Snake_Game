@@ -172,23 +172,30 @@ static void test_invalid_direction_stops_movement(void)
     setup(&s);
     s.direction = (Direction)99;
 
-    printf("\n--- Invalid Direction Debug ---\n");
-
-    printf("Before engine_tick: status=%d, direction=%d\n",
-           (int)s.status, (int)s.direction);
-
     engine_tick(&s);
-
-    printf("After engine_tick: status=%d, direction=%d\n",
-           (int)s.status, (int)s.direction);
-
-    printf("--------------------------------\n");
 
     CHECK(s.snake[0].x == 10 && s.snake[0].y == 10,
           "Invalid direction does not move the snake");
 
     CHECK(s.status == GAME_RUNNING,
           "Invalid direction does not end the game");
+}
+
+/* SG-30: Test that an invalid obstacle count prevents movement. */
+static void test_invalid_obstacle_count_stops_movement(void)
+{
+    GameState s;
+
+    setup(&s);
+    s.obstacle_count = MAX_OBSTACLES + 1;
+
+    engine_tick(&s);
+
+    CHECK(s.snake[0].x == 10 && s.snake[0].y == 10,
+          "Invalid obstacle count does not move the snake");
+
+    CHECK(s.status == GAME_RUNNING,
+          "Invalid obstacle count does not end the game");
 }
 
 int main(void)
@@ -198,11 +205,12 @@ int main(void)
     test_reverse_and_invalid_keys();
     test_controls_when_not_running();
     test_invalid_direction_stops_movement();
+    test_invalid_obstacle_count_stops_movement();
 
-    printf("\nSG-23: %d checks, %d failure(s).\n", checks, failures);
+    printf("\nSG-30: %d checks, %d failure(s).\n", checks, failures);
 
     if (failures == 0) {
-        puts("ALL SG-23 AUTOMATED TESTS PASSED.");
+        puts("ALL AUTOMATED TESTS PASSED.");
         return 0;
     }
 
