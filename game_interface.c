@@ -1,4 +1,5 @@
 #include "game_interface.h"
+#include "database.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -203,4 +204,28 @@ int interface_wait_key(void) {
 #endif
     } while (key == EOF);
     return tolower((unsigned char)key);
+}
+
+
+/* Display the global MySQL leaderboard. */
+void interface_show_leaderboard(void)
+{
+    LeaderboardEntry entries[DB_LEADERBOARD_LIMIT];
+    int count = 0;
+    int i;
+
+    printf("\n========== GLOBAL TOP 10 ==========\n");
+    if (!db_get_leaderboard(entries, &count)) {
+        printf("Leaderboard is currently unavailable.\n");
+        return;
+    }
+    if (count == 0) {
+        printf("No scores have been recorded yet.\n");
+        return;
+    }
+    printf("%-4s %-20s %-12s %-12s\n", "Rank", "Username", "High score", "Games");
+    for (i = 0; i < count; ++i) {
+        printf("%-4d %-20s %-12d %-12d\n", i + 1, entries[i].username,
+               entries[i].high_score, entries[i].games_played);
+    }
 }
