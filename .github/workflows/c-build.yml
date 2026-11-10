@@ -138,3 +138,4 @@ jobs:
 
           build_and_run test_snake_movement \
             tests/test_snake_movement.c game_engine.c score_manager.c food.c
+
