@@ -12,6 +12,7 @@ void interface_show_instructions(void);
 void interface_render_console(const GameState *state);
 void interface_show_game_over(const GameState *state);
 void interface_show_message(const char *message);
+void interface_show_leaderboard(void);
 
 /* Reads one key without waiting for a full line.
    Returns 0 if no key is available; normalizes movement to WASD,

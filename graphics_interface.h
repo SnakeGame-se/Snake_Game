@@ -3,6 +3,6 @@
 
 #include "game_state.h"
 
-int graphics_run(GameState *state);
+int graphics_run(GameState *state, int player_id);
 
 #endif
