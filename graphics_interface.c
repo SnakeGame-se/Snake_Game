@@ -6,6 +6,7 @@
 #include "graphics_interface.h"
 #include "game_engine.h"
 #include "score_manager.h"
+#include "database.h"
 
 #define CELL_SIZE 20
 #define BOARD_X 20
@@ -23,6 +24,8 @@
 
 static GameState *game_state = NULL;
 static HWND game_window = NULL;
+static int active_player_id = 0;
+static int graphics_score_saved = 0;
 
 /*
  * Add graphics-only obstacles.
@@ -150,6 +153,9 @@ static void render_game(HDC hdc)
 {
     size_t i;
     char score_text[80];
+    LeaderboardEntry leaderboard[DB_LEADERBOARD_LIMIT];
+    int leaderboard_count = 0;
+    int leaderboard_index;
 
     RECT background;
     RECT board_rect;
@@ -253,6 +259,22 @@ static void render_game(HDC hdc)
         draw_text(hdc, BOARD_X + 230, BOARD_Y + 240,
                   "Press Q or ESC to quit",
                   RGB(255, 255, 255), 17);
+
+        if (db_get_leaderboard(leaderboard, &leaderboard_count)) {
+            draw_text(hdc, BOARD_X + 470, BOARD_Y + 110,
+                      "GLOBAL TOP 10", RGB(80, 220, 150), 18);
+            for (leaderboard_index = 0;
+                 leaderboard_index < leaderboard_count && leaderboard_index < 10;
+                 ++leaderboard_index) {
+                char line[100];
+                snprintf(line, sizeof(line), "%d. %s - %d",
+                         leaderboard_index + 1,
+                         leaderboard[leaderboard_index].username,
+                         leaderboard[leaderboard_index].high_score);
+                draw_text(hdc, BOARD_X + 470, BOARD_Y + 145 + leaderboard_index * 22,
+                          line, RGB(230, 235, 245), 13);
+            }
+        }
     }
 }
 
@@ -266,6 +288,7 @@ static void restart_game(void)
     engine_initialize(game_state);
     setup_graphics_obstacles();
     session_start(game_state);
+    graphics_score_saved = 0;
 
     InvalidateRect(game_window, NULL, TRUE);
 }
@@ -300,6 +323,12 @@ static LRESULT CALLBACK game_window_proc(
             game_state->status == GAME_RUNNING) {
 
             engine_tick(game_state);
+            if (game_state->status == GAME_OVER && !graphics_score_saved) {
+                if (!db_save_game_result(active_player_id, game_state->final_score)) {
+                    OutputDebugStringA("Snake: failed to save game score.\n");
+                }
+                graphics_score_saved = 1;
+            }
             InvalidateRect(hwnd, NULL, TRUE);
         }
         return 0;
@@ -393,7 +422,7 @@ static LRESULT CALLBACK game_window_proc(
 }
 
 /* Start the Windows graphics interface. */
-int graphics_run(GameState *state)
+int graphics_run(GameState *state, int player_id)
 {
     WNDCLASSA window_class;
     MSG message;
@@ -404,6 +433,8 @@ int graphics_run(GameState *state)
     }
 
     game_state = state;
+    active_player_id = player_id;
+    graphics_score_saved = 0;
 
     /* Add obstacles only for Graphics Mode. */
     setup_graphics_obstacles();
@@ -460,6 +491,7 @@ int graphics_run(GameState *state)
 
     game_window = NULL;
     game_state = NULL;
+    active_player_id = 0;
 
     return 0;
 }
