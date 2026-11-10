@@ -1,5 +1,4 @@
-
-name: Snake Game C Build
+name: Snake Game C Build and Tests
 
 on:
   push:
@@ -8,8 +7,8 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
-    name: Compile Snake Game
+  build-and-test:
+    name: Build and Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +20,121 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc
 
-      - name: Compile C project
+      - name: Compile Snake Game
         run: |
-          gcc -std=c11 -Wall -Wextra -Wpedantic \
-            main.c game_engine.c game_interface.c score_manager.c \
+          gcc -D_POSIX_C_SOURCE=199309L -std=c11 -Wall -Wextra -Wpedantic \
+            main.c game_engine.c game_interface.c score_manager.c food.c \
             -o snake
+
+      - name: Compile and Run Automated Tests
+        run: |
+          set -e
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_collision.c game_engine.c score_manager.c food.c \
+            -o test_collision
+          ./test_collision
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_engine_initialization.c game_engine.c score_manager.c food.c \
+            -o test_engine_initialization
+          ./test_engine_initialization
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_food.c food.c \
+            -o test_food
+          ./test_food
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_food_growth.c game_engine.c score_manager.c food.c \
+            -o test_food_growth
+          ./test_food_growth
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_game_over.c game_engine.c score_manager.c food.c \
+            -o test_game_over
+          ./test_game_over
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_pause_resume.c game_engine.c score_manager.c food.c \
+            -o test_pause_resume
+          ./test_pause_resume
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_restart.c game_engine.c score_manager.c food.c \
+            -o test_restart
+          ./test_restart
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_score.c score_manager.c \
+            -o test_score
+          ./test_score
+
+          gcc -D_POSIX_C_SOURCE=200809L -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_score_display.c game_interface.c \
+            -o test_score_display
+          ./test_score_display
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_self_collision.c game_engine.c score_manager.c food.c \
+            -o test_self_collision
+          ./test_self_collision
+
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_snake_movement.c game_engine.c score_manager.c food.c \
+            -o test_snake_movement
+          ./test_snake_movement
+
+      - name: Run Tests with Address and Undefined Behavior Sanitizers
+        run: |
+          set -e
+
+          build_and_run() {
+            test_name="$1"
+            shift
+
+            echo "Building $test_name with sanitizers"
+
+            gcc -D_POSIX_C_SOURCE=200809L -std=c11 -Wall -Wextra -Wpedantic \
+              -g -fsanitize=address,undefined \
+              -fno-omit-frame-pointer \
+              "$@" -o "$test_name"
+
+            echo "Running $test_name"
+            ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
+            UBSAN_OPTIONS=halt_on_error=1 \
+              "./$test_name"
+          }
+
+          build_and_run test_collision \
+            tests/test_collision.c game_engine.c score_manager.c food.c
+
+          build_and_run test_engine_initialization \
+            tests/test_engine_initialization.c game_engine.c score_manager.c food.c
+
+          build_and_run test_food \
+            tests/test_food.c food.c
+
+          build_and_run test_food_growth \
+            tests/test_food_growth.c game_engine.c score_manager.c food.c
+
+          build_and_run test_game_over \
+            tests/test_game_over.c game_engine.c score_manager.c food.c
+
+          build_and_run test_pause_resume \
+            tests/test_pause_resume.c game_engine.c score_manager.c food.c
+
+          build_and_run test_restart \
+            tests/test_restart.c game_engine.c score_manager.c food.c
+
+          build_and_run test_score \
+            tests/test_score.c score_manager.c
+
+          build_and_run test_score_display \
+            tests/test_score_display.c game_interface.c
+
+          build_and_run test_self_collision \
+            tests/test_self_collision.c game_engine.c score_manager.c food.c
+
+          build_and_run test_snake_movement \
+            tests/test_snake_movement.c game_engine.c score_manager.c food.c

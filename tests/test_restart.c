@@ -65,8 +65,8 @@ int main(void)
           state.snake[2].y == BOARD_HEIGHT / 2,
           "Restart resets third snake segment");
 
-    CHECK(state.obstacle_count == 0,
-          "Restart clears obstacles");
+    CHECK(state.obstacle_count == 8,
+          "Restart restores the initial obstacles");
 
     /* Test 3: Restart after Game Over. */
     session_add_food_score(&state);
