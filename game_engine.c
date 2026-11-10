@@ -129,6 +129,7 @@ void engine_tick(GameState *state) {
     if (state == NULL || state->status != GAME_RUNNING ||
         state->snake_length == 0 ||
         state->snake_length > MAX_SNAKE_LENGTH ||
+        state->obstacle_count > MAX_OBSTACLES ||
         state->direction < DIR_UP ||
         state->direction > DIR_RIGHT) {
         return;
