@@ -70,7 +70,7 @@ jobs:
             -o test_score
           ./test_score
 
-          gcc -std=c11 -Wall -Wextra -Wpedantic \
+          gcc -D_POSIX_C_SOURCE=200809L -std=c11 -Wall -Wextra -Wpedantic \
             tests/test_score_display.c game_interface.c \
             -o test_score_display
           ./test_score_display
@@ -84,6 +84,7 @@ jobs:
             tests/test_snake_movement.c game_engine.c score_manager.c food.c \
             -o test_snake_movement
           ./test_snake_movement
+
       - name: Run Tests with Address and Undefined Behavior Sanitizers
         run: |
           set -e
@@ -94,7 +95,7 @@ jobs:
 
             echo "Building $test_name with sanitizers"
 
-            gcc -std=c11 -Wall -Wextra -Wpedantic \
+            gcc -D_POSIX_C_SOURCE=200809L -std=c11 -Wall -Wextra -Wpedantic \
               -g -fsanitize=address,undefined \
               -fno-omit-frame-pointer \
               "$@" -o "$test_name"
