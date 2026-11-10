@@ -24,5 +24,5 @@ jobs:
       - name: Compile C project
         run: |
           gcc -std=c11 -Wall -Wextra -Wpedantic \
-            main.c game_engine.c game_interface.c score_manager.c \
+            main.c game_engine.c game_interface.c score_manager.c food.c \
             -o snake
