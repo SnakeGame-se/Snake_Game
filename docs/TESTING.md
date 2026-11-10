@@ -78,7 +78,7 @@ On Linux or macOS:
 ./test_snake_movement
 ```
 
-On Windows using MinGW, append `.exe` to the executable names.
+On Windows using MinGW, append `.exe` to the executable names and run them from PowerShell using `.\test_name.exe`.
 
 The interactive keyboard demo, `tests/input_demo.c`, is not included in automated testing because it requires keyboard input.
 
