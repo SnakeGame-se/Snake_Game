@@ -22,7 +22,7 @@ jobs:
 
       - name: Compile Snake Game
         run: |
-          gcc -std=c11 -Wall -Wextra -Wpedantic \
+          gcc -D_POSIX_C_SOURCE=199309L -std=c11 -Wall -Wextra -Wpedantic \
             main.c game_engine.c game_interface.c score_manager.c food.c \
             -o snake
 
@@ -80,7 +80,7 @@ jobs:
             -o test_self_collision
           ./test_self_collision
 
-          gcc -std=c11 -Wall -Wextra -Wpedantic \
+          gcc -D_POSIX_C_SOURCE=199309L -std=c11 -Wall -Wextra -Wpedantic \
             tests/test_snake_movement.c game_engine.c score_manager.c food.c \
             -o test_snake_movement
           ./test_snake_movement
