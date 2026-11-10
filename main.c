@@ -6,6 +6,10 @@
 #include "game_interface.h"
 #include "game_engine.h"
 #include "score_manager.h"
+#include "database.h"
+
+#include <stdio.h>
+#include <string.h>
 
 #ifdef _WIN32
 #include "graphics_interface.h"
@@ -35,10 +39,35 @@ int main(void)
     GameState state;
     int mode;
     int key;
+    int player_id;
+    int score_saved = 0;
+    char username[DB_USERNAME_MAX + 2];
+
+    printf("Enter username (1-%d characters): ", DB_USERNAME_MAX);
+    fflush(stdout);
+    if (fgets(username, sizeof(username), stdin) == NULL) {
+        return 1;
+    }
+    username[strcspn(username, "\r\n")] = '\0';
+    if (username[0] == '\0' || strlen(username) > DB_USERNAME_MAX) {
+        fprintf(stderr, "Invalid username.\n");
+        return 1;
+    }
+
+    if (!db_connect()) {
+        fprintf(stderr, "Cannot start game without database connection. Check DATABASE_SETUP.md.\n");
+        return 1;
+    }
+    player_id = db_get_or_create_player(username);
+    if (player_id < 1) {
+        db_close();
+        return 1;
+    }
 
     mode = interface_select_mode();
 
     if (mode == 0) {
+        db_close();
         return 0;
     }
 
@@ -48,17 +77,23 @@ int main(void)
     /* Graphics mode is available on Windows only. */
     if (mode == MODE_GRAPHICS) {
 #ifdef _WIN32
-        return graphics_run(&state);
+        {
+            int result = graphics_run(&state, player_id);
+            db_close();
+            return result;
+        }
 #else
         interface_show_message(
             "Graphics mode is available only on Windows."
         );
+        db_close();
         return 0;
 #endif
     }
 
     if (mode != MODE_CONSOLE) {
         interface_show_message("Invalid game mode selected.");
+        db_close();
         return 1;
     }
 
@@ -70,13 +105,21 @@ int main(void)
 
         if (state.status == GAME_OVER) {
 
+            if (!score_saved) {
+                if (!db_save_game_result(player_id, state.final_score)) {
+                    interface_show_message("Warning: score could not be saved.");
+                }
+                score_saved = 1;
+            }
             interface_show_game_over(&state);
+            interface_show_leaderboard();
 
             key = interface_wait_key();
 
             if (key == 'r') {
                 engine_initialize(&state);
                 session_start(&state);
+                score_saved = 0;
                 continue;
             }
 
@@ -96,6 +139,7 @@ int main(void)
         else if (key == 'r') {
             engine_initialize(&state);
             session_start(&state);
+            score_saved = 0;
         }
         else {
             engine_set_direction(&state, key);
@@ -110,5 +154,6 @@ int main(void)
         }
     }
 
+    db_close();
     return 0;
 }
