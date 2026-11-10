@@ -33,14 +33,14 @@ On the game-over screen, press R to restart or Q/Esc to quit.
 
 ## Build and Run
 
-You need GCC to compile the project.
+You need GCC, a running MySQL Server, and the MySQL C development connector to compile the database-enabled project. Configure the connector include/library paths for your platform.
 
 ### Windows — Console and Graphics Modes
 
 Using MinGW GCC, run this command from the repository root:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c graphics_interface.c score_manager.c food.c -lgdi32 -o snake_game.exe
+gcc -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c graphics_interface.c score_manager.c food.c database.c -I"%MYSQL_INCLUDE%" -L"%MYSQL_LIB%" -lmysql -lgdi32 -o snake_game.exe
 ```
 
 Run:
@@ -49,14 +49,14 @@ Run:
 .\snake_game.exe
 ```
 
-Choose console mode or graphics mode from the title menu.
+Choose console mode or graphics mode from the title menu. The game asks for a username and requires a reachable MySQL database before starting. Set the `SNAKE_DB_HOST`, `SNAKE_DB_PORT`, `SNAKE_DB_NAME`, `SNAKE_DB_USER`, and `SNAKE_DB_PASSWORD` environment variables as described in `DATABASE_SETUP.md`.
 
 ### Linux and macOS — Console Mode
 
 Run:
 
 ```bash
-gcc -D_POSIX_C_SOURCE=199309L -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c score_manager.c food.c -o snake_game
+gcc -D_POSIX_C_SOURCE=199309L -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c score_manager.c food.c database.c $(mysql_config --cflags --libs) -o snake_game
 ```
 
 Start the application:
