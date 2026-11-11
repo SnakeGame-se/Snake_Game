@@ -19,8 +19,8 @@
 #include <unistd.h>
 #endif
 
-/* Plain (non-arrow) keys, shared by both platforms. */
-static InputAction map_char(int c)
+/* Map plain (non-arrow) key codes shared by both platforms. */
+InputAction input_map_character(int c)
 {
     switch (c) {
     case 'w': case 'W': return INPUT_UP;
@@ -77,7 +77,7 @@ InputAction input_poll(void)
         } else if (c == 27) {
             a = INPUT_QUIT; /* Esc */
         } else {
-            a = map_char(c);
+            a = input_map_character(c);
         }
 
         if (a != INPUT_NONE) {
@@ -177,7 +177,7 @@ InputAction input_poll(void)
         if (c < 0) {
             break; /* end of input or read error: avoid spinning */
         }
-        a = (c == 27) ? parse_escape() : map_char(c);
+        a = (c == 27) ? parse_escape() : input_map_character(c);
         if (a != INPUT_NONE) {
             result = a; /* most recent recognised key wins */
         }

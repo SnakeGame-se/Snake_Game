@@ -85,6 +85,11 @@ jobs:
             -o test_snake_movement
           ./test_snake_movement
 
+          gcc -std=c11 -Wall -Wextra -Wpedantic \
+            tests/test_input_controls.c input_controls.c \
+            -o test_input_controls
+          ./test_input_controls
+
       - name: Run Tests with Address and Undefined Behavior Sanitizers
         run: |
           set -e
@@ -139,4 +144,7 @@ jobs:
 
           build_and_run test_snake_movement \
             tests/test_snake_movement.c game_engine.c score_manager.c food.c
+
+          build_and_run test_input_controls \
+            tests/test_input_controls.c input_controls.c
 
