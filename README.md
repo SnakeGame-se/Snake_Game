@@ -40,7 +40,7 @@ You need GCC, a running MySQL Server, and the MySQL C development connector to c
 Using MinGW GCC, run this command from the repository root:
 
 ```bash
-gcc -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c graphics_interface.c score_manager.c food.c database.c -I"%MYSQL_INCLUDE%" -L"%MYSQL_LIB%" -lmysql -lgdi32 -o snake_game.exe
+gcc -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c graphics_interface.c input_controls.c score_manager.c food.c database.c -I"%MYSQL_INCLUDE%" -L"%MYSQL_LIB%" -lmysql -lgdi32 -o snake_game.exe
 ```
 
 Run:
@@ -56,7 +56,7 @@ Choose console mode or graphics mode from the title menu. The game asks for a us
 Run:
 
 ```bash
-gcc -D_POSIX_C_SOURCE=199309L -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c score_manager.c food.c database.c $(mysql_config --cflags --libs) -o snake_game
+gcc -D_POSIX_C_SOURCE=200809L -std=c11 -Wall -Wextra -Wpedantic main.c game_engine.c game_interface.c input_controls.c score_manager.c food.c database.c $(mysql_config --cflags --libs) -o snake_game
 ```
 
 Start the application:

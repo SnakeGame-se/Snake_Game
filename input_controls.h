@@ -30,6 +30,7 @@ typedef enum {
     INPUT_LEFT,
     INPUT_RIGHT,
     INPUT_PAUSE,
+    INPUT_RESTART,
     INPUT_ENTER,
     INPUT_QUIT
 } InputAction;
