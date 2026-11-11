@@ -69,7 +69,7 @@ Graphics mode is available only on Windows.
 
 ## Automated Tests
 
-The project contains 11 independent automated test programs in the `tests/` directory.
+The project contains 12 independent automated test programs in the `tests/` directory.
 
 The test programs cover:
 
@@ -82,6 +82,7 @@ The test programs cover:
 - Score calculation and display.
 - Snake movement and direction validation.
 - Game engine initialization.
+- Keyboard character-to-action mapping.
 
 Each test program returns exit code 0 when its checks pass and exit code 1 when a check fails.
 
@@ -143,7 +144,7 @@ GitHub Actions is configured in `.github/workflows/c-build.yml`.
 The workflow:
 
 1. Builds the console application on Ubuntu.
-2. Compiles and executes all 11 automated test programs.
+2. Compiles and executes all 12 automated test programs.
 3. Executes the automated tests with AddressSanitizer and UndefinedBehaviorSanitizer.
 
 The workflow runs on pushes to `main` and `SG-*` branches and on pull requests targeting `main`.

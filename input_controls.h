@@ -35,6 +35,9 @@ typedef enum {
     INPUT_QUIT
 } InputAction;
 
+/* Map a plain keyboard character to an action; arrow-key codes are platform-specific. */
+InputAction input_map_character(int character);
+
 /* Call once at program start (sets the terminal up on Linux/macOS). */
 void input_init(void);
 

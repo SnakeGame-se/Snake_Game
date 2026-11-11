@@ -4,7 +4,7 @@ This document describes the automated and manual testing performed for the Snake
 
 ## 1. Automated Unit Tests
 
-The project contains **11 automated test programs** in the `tests/` directory.
+The project contains **12 automated test programs** in the `tests/` directory.
 
 Each test program runs independently and returns:
 - Exit code `0` when all its checks pass.
@@ -25,6 +25,7 @@ Each test program runs independently and returns:
 | `tests/test_score_display.c` | SG-20 | Console display behaviour | Verifies that the current score and game status are displayed correctly by the console interface. |
 | `tests/test_snake_movement.c` | SG-23 | SNK-F-004, 005, 006; TC-Move-01, TC-Move-02, TC-Move-03 | Movement in all four directions, direction input, invalid keys, reverse-direction rejection, paused-state input handling and invalid direction safety. |
 | `tests/test_engine_initialization.c` | SG-30 | Game initialization behaviour | Initial game status, snake length and positions, direction, obstacle initialization, valid food placement and NULL initialization safety. |
+| `tests/test_input_controls.c` | SG-33 | Keyboard action mapping | Uppercase/lowercase movement, pause, restart and quit keys; Enter; unmapped keys; and action-name fallback. |
 
 The test programs are separate executables so that failures can be identified independently.
 
@@ -53,11 +54,13 @@ gcc -std=c11 -Wall -Wextra -Wpedantic tests/test_restart.c game_engine.c score_m
 
 gcc -std=c11 -Wall -Wextra -Wpedantic tests/test_score.c score_manager.c -o test_score
 
-gcc -std=c11 -Wall -Wextra -Wpedantic tests/test_score_display.c game_interface.c -o test_score_display
+gcc -D_POSIX_C_SOURCE=200809L -std=c11 -Wall -Wextra -Wpedantic tests/test_score_display.c game_interface.c database.c $(pkg-config --cflags --libs mysqlclient) -o test_score_display
 
 gcc -std=c11 -Wall -Wextra -Wpedantic tests/test_self_collision.c game_engine.c score_manager.c food.c -o test_self_collision
 
 gcc -std=c11 -Wall -Wextra -Wpedantic tests/test_snake_movement.c game_engine.c score_manager.c food.c -o test_snake_movement
+
+gcc -std=c11 -Wall -Wextra -Wpedantic tests/test_input_controls.c input_controls.c -o test_input_controls
 ```
 
 ### 2.2 Execute the test programs
@@ -76,6 +79,7 @@ On Linux or macOS:
 ./test_score_display
 ./test_self_collision
 ./test_snake_movement
+./test_input_controls
 ```
 
 On Windows using MinGW, append `.exe` to the executable names and run them from PowerShell using `.\test_name.exe`.
@@ -137,7 +141,7 @@ UBSAN_OPTIONS=halt_on_error=1 \
 ./test_game_over
 ```
 
-The GitHub Actions workflow applies sanitizer compilation and execution to all 11 automated test programs.
+The GitHub Actions workflow applies sanitizer compilation and execution to all 12 automated test programs.
 
 The MinGW GCC compiler on Windows may not provide the same sanitizer support. Sanitizer verification is therefore performed in the Ubuntu CI environment.
 
@@ -156,8 +160,8 @@ The CI workflow performs the following operations:
 1. Checks out the repository.
 2. Installs GCC on Ubuntu.
 3. Compiles the Snake Game application.
-4. Compiles and executes all 11 automated test programs.
-5. Rebuilds and executes all 11 test programs with AddressSanitizer and UndefinedBehaviorSanitizer.
+4. Compiles and executes all 12 automated test programs.
+5. Rebuilds and executes all 12 test programs with AddressSanitizer and UndefinedBehaviorSanitizer.
 
 The workflow uses compiler warning flags:
 
