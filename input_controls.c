@@ -28,6 +28,7 @@ static InputAction map_char(int c)
     case 'a': case 'A': return INPUT_LEFT;
     case 'd': case 'D': return INPUT_RIGHT;
     case ' ': case 'p': case 'P': return INPUT_PAUSE;
+    case 'r': case 'R': return INPUT_RESTART;
     case '\r': case '\n': return INPUT_ENTER;
     case 'q': case 'Q': return INPUT_QUIT;
     default: return INPUT_NONE; /* unmapped keys are ignored */
@@ -43,6 +44,7 @@ const char *input_action_name(InputAction action)
     case INPUT_LEFT:  return "LEFT";
     case INPUT_RIGHT: return "RIGHT";
     case INPUT_PAUSE: return "PAUSE";
+    case INPUT_RESTART: return "RESTART";
     case INPUT_ENTER: return "ENTER";
     case INPUT_QUIT:  return "QUIT";
     }

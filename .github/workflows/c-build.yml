@@ -23,7 +23,7 @@ jobs:
       - name: Compile Snake Game
         run: |
           gcc -D_POSIX_C_SOURCE=199309L -std=c11 -Wall -Wextra -Wpedantic \
-            main.c game_engine.c game_interface.c score_manager.c food.c database.c \
+            main.c game_engine.c game_interface.c input_controls.c score_manager.c food.c database.c \
             $(pkg-config --cflags --libs mysqlclient) -o snake
 
       - name: Compile and Run Automated Tests

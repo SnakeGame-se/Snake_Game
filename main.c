@@ -7,6 +7,7 @@
 #include "game_engine.h"
 #include "score_manager.h"
 #include "database.h"
+#include "input_controls.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +20,32 @@
 #endif
 
 #define TICK_MS 120
+
+static void delay_ms(int milliseconds);
+
+/* Translate the platform-neutral keyboard action into the existing game API. */
+static int read_game_key(void)
+{
+    InputAction action = input_poll();
+    switch (action) {
+        case INPUT_UP: return 'w';
+        case INPUT_DOWN: return 's';
+        case INPUT_LEFT: return 'a';
+        case INPUT_RIGHT: return 'd';
+        case INPUT_PAUSE: return 'p';
+        case INPUT_RESTART: return 'r';
+        case INPUT_QUIT: return 'q';
+        case INPUT_ENTER: return '\n';
+        case INPUT_NONE: default: return 0;
+    }
+}
+
+static int wait_game_key(void)
+{
+    int key;
+    while ((key = read_game_key()) == 0) delay_ms(10);
+    return key;
+}
 
 static void delay_ms(int milliseconds)
 {
@@ -98,6 +125,7 @@ int main(void)
     }
 
     interface_show_instructions();
+    input_init();
 
     while (state.status != GAME_QUIT) {
 
@@ -114,7 +142,7 @@ int main(void)
             interface_show_game_over(&state);
             interface_show_leaderboard();
 
-            key = interface_wait_key();
+            key = wait_game_key();
 
             if (key == 'r') {
                 engine_initialize(&state);
@@ -126,7 +154,7 @@ int main(void)
             break;
         }
 
-        key = interface_read_key();
+        key = read_game_key();
 
         if (key == 'q') {
             state.status = GAME_QUIT;
@@ -154,6 +182,7 @@ int main(void)
         }
     }
 
+    input_shutdown();
     db_close();
     return 0;
 }
