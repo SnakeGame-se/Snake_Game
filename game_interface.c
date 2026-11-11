@@ -45,15 +45,62 @@ static int read_key_nonblocking(void) {
 }
 #endif
 
+/* Keep the same visual roles in the Windows console and ANSI terminals. */
+static void set_cell_color(char cell)
+{
+#ifdef _WIN32
+    static HANDLE output;
+    static WORD original_attributes = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+    static int initialized;
+    WORD attributes = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+
+    if (!initialized) {
+        CONSOLE_SCREEN_BUFFER_INFO info;
+        output = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (output != INVALID_HANDLE_VALUE && GetConsoleScreenBufferInfo(output, &info)) {
+            original_attributes = info.wAttributes;
+        }
+        initialized = 1;
+    }
+    switch (cell) {
+        case 'O': attributes = FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
+        case 'o': attributes = FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY; break;
+        case '*': attributes = FOREGROUND_RED | FOREGROUND_INTENSITY; break;
+        case '#': attributes = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY; break;
+        default:  attributes = original_attributes; break;
+    }
+    if (output != INVALID_HANDLE_VALUE) SetConsoleTextAttribute(output, attributes);
+#else
+    switch (cell) {
+        case 'O': printf("\033[1;32m"); break;
+        case 'o': printf("\033[32m"); break;
+        case '*': printf("\033[1;31m"); break;
+        case '#': printf("\033[1;33m"); break;
+        default:  printf("\033[0m"); break;
+    }
+#endif
+}
+
+static void reset_console_color(void)
+{
+#ifdef _WIN32
+    /* A space uses the saved default attributes through set_cell_color. */
+    set_cell_color(' ');
+#else
+    printf("\033[0m");
+#endif
+}
+
 int interface_select_mode(void) {
     char line[64];
     for (;;) {
-        printf("\n========================================\n");
-        printf("             NOKIA SNAKE\n");
-        printf("========================================\n");
-        printf("1. Console mode\n");
-        printf("2. Graphics mode\n");
-        printf("0. Exit\n");
+        printf("\n+---------------------------------------+\n");
+        printf("|              NOKIA SNAKE              |\n");
+        printf("+---------------------------------------+\n");
+        printf("|  1  Play in the console               |\n");
+        printf("|  2  Play in a graphics window         |\n");
+        printf("|  0  Exit                              |\n");
+        printf("+---------------------------------------+\n");
         printf("Choose an option: ");
         fflush(stdout);
 
@@ -64,7 +111,6 @@ int interface_select_mode(void) {
             return MODE_CONSOLE;
         }
         if (line[0] == '2') {
-            printf("Graphics mode selected. Connect the team's graphics renderer here.\n");
             return MODE_GRAPHICS;
         }
         if (line[0] == '0') {
@@ -100,7 +146,11 @@ void interface_render_console(const GameState *state) {
 #else
     printf("\033[H");
 #endif
-    printf("NOKIA SNAKE   Score: %d   Status: ", state->score);
+    printf("+------------------------------------------+\n");
+    printf("|              NOKIA SNAKE                 |\n");
+    printf("+------------------------------------------+\n");
+    printf(" Score: %-6d  Food: %-4d  Status: ",
+           state->score, state->score / SCORE_PER_FOOD);
     switch (state->status) {
         case GAME_READY:   printf("READY"); break;
         case GAME_RUNNING: printf("RUNNING"); break;
@@ -135,14 +185,16 @@ void interface_render_console(const GameState *state) {
                     break;
                 }
             }
+            set_cell_color(cell);
             putchar(cell);
         }
+        reset_console_color();
         printf("|\n");
     }
     printf("+");
     for (x = 0; x < BOARD_WIDTH; ++x) printf("-");
     printf("+\n");
-    printf("W/A/S/D: move | P: pause/resume | R: restart | Q: quit\n");
+    printf("Controls  WASD / arrows: move   P: pause   R: restart   Q: quit\n");
     fflush(stdout);
 }
 
